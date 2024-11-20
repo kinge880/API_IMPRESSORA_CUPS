@@ -19,58 +19,6 @@ from django.http import JsonResponse
 # Executar threads para manusear impressões simultâneas 
 executor = ThreadPoolExecutor(max_workers=1024) # Configura o número máximo de impressões simultâneas
 
-# @method_decorator(csrf_exempt, name='dispatch') # Aplica csrf_exempt na classe inteira
-# class FileUploadView(APIView):
-#     def post(self, request, *args, **kwargs):
-#         serializer = FileUploadSerializer(data=request.data)
-        
-#         if serializer.is_valid():
-#             printer_name = serializer.validated_data['printer_name']
-#             uploaded_file = serializer.validated_data['file']
-            
-#             if uploaded_file is None:
-#                 return Response({"messages": "Nenhum arquivo foi enviado."}, status=status.HTTP_400_BAD_REQUEST)
-            
-#             print(f"Recebido arquivo: {uploaded_file}")
-
-#             # Criação do diretório de upload
-#             temp_dir = 'temp_uploads'
-#             if not os.path.exists(temp_dir):
-#                 os.makedirs(temp_dir)
-                
-#             # Defina o caminho do arquivo após verificar que o arquivo foi recebido
-#             file_path = os.path.join(temp_dir, uploaded_file.name)
-#             print(f"Caminho do arquivo: {file_path}")
-            
-#             try:
-#                 # Escrevendo o arquivo no sistema
-#                 with open(file_path, 'wb') as f:
-#                     for chunk in uploaded_file.chunks():
-#                         f.write(chunk)
-#                     print(f"Arquivo {file_path} salvo com sucesso.")
-#             except Exception as e:
-#                 return Response({"messages": f"Erro ao salvar o arquivo: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#             # Verifique se o arquivo existe no caminho
-#             if os.path.exists(file_path):
-#                 print(f"Arquivo encontrado no caminho: {file_path}")
-#                 try:
-#                     result = subprocess.run(['lp', '-d', printer_name, file_path], check=True, capture_output=True, text=True)
-#                     print(f"Arquivo {file_path} simulado para a impressão de {printer_name}")
-#                     return Response({"messages": "Arquivo salvo localmente e simulado para impressora com sucesso."}, status=status.HTTP_201_CREATED)
-#                 except subprocess.CalledProcessError as e:
-#                     print(f"Erro ao simular a impressão: {e.stderr}")
-#                     return Response({"messages": f"Erro ao simular a impressão: {e.stderr}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#                 except Exception as e:
-#                     print(f"Erro desconhecido ao simular a impressão: {str(e)}")
-#                     return Response({"messages": f"Erro desconhecido ao simular a impressão: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#             else:
-#                 print(f"Erro: arquivo {file_path} não encontrado.")
-#                 return Response({"messages": f"Erro: arquivo {file_path} não encontrado."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-#         # Se o serializer não for válido
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 @method_decorator(csrf_exempt, name='dispatch') # Aplica csrf_exempt na classe inteira
 class FileUploadView(APIView):
     def post(self, request, *args, **kwargs):
@@ -78,20 +26,33 @@ class FileUploadView(APIView):
         
         if serializer.is_valid():
             printer_name = serializer.validated_data['printer_name']
-            uploaded_file = serializer.validated_data.get('file')
-            text_content = serializer.validated_data.get('text')
+            uploaded_file = serializer.validated_data['file']
             
-            if not uploaded_file and not text_content:
-                return Response({"messages": "Nenhum arquivo ou texto foi enviado."}, status=status.HTTP_400_BAD_REQUEST)
+            if uploaded_file is None:
+                return Response({"messages": "Nenhum arquivo foi enviado."}, status=status.HTTP_400_BAD_REQUEST)
             
-            if uploaded_file:
-                print(f"Recebido arquivo: {uploaded_file}")
-                file_path = self.save_uploaded_file(uploaded_file)
-            else:
-                print(f"Recebido texto: {text_content}")
-                file_path = self.save_text_to_file(text_content)
+            print(f"Recebido arquivo: {uploaded_file}")
+
+            # Criação do diretório de upload
+            temp_dir = 'temp_uploads'
+            if not os.path.exists(temp_dir):
+                os.makedirs(temp_dir)
+                
+            # Defina o caminho do arquivo após verificar que o arquivo foi recebido
+            file_path = os.path.join(temp_dir, uploaded_file.name)
+            print(f"Caminho do arquivo: {file_path}")
             
-            if file_path and os.path.exists(file_path):
+            try:
+                # Escrevendo o arquivo no sistema
+                with open(file_path, 'wb') as f:
+                    for chunk in uploaded_file.chunks():
+                        f.write(chunk)
+                    print(f"Arquivo {file_path} salvo com sucesso.")
+            except Exception as e:
+                return Response({"messages": f"Erro ao salvar o arquivo: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # Verifique se o arquivo existe no caminho
+            if os.path.exists(file_path):
                 print(f"Arquivo encontrado no caminho: {file_path}")
                 try:
                     result = subprocess.run(['lp', '-d', printer_name, file_path], check=True, capture_output=True, text=True)
@@ -109,35 +70,6 @@ class FileUploadView(APIView):
         
         # Se o serializer não for válido
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def save_uploaded_file(self, uploaded_file):
-        temp_dir = 'temp_uploads'
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
-        file_path = os.path.join(temp_dir, uploaded_file.name)
-        try:
-            with open(file_path, 'wb') as f:
-                for chunk in uploaded_file.chunks():
-                    f.write(chunk)
-            print(f"Arquivo {file_path} salvo com sucesso.")
-            return file_path
-        except Exception as e:
-            print(f"Erro ao salvar o arquivo: {str(e)}")
-            return None
-
-    def save_text_to_file(self, text_content):
-        temp_dir = 'temp_uploads'
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
-        file_path = os.path.join(temp_dir, 'temp_text_file.txt')
-        try:
-            with open(file_path, 'w') as f:
-                f.write(text_content)
-            print(f"Texto salvo no arquivo {file_path} com sucesso.")
-            return file_path
-        except Exception as e:
-            print(f"Erro ao salvar o texto no arquivo: {str(e)}")
-            return None
 
 class PrinterListView(APIView):
     def get(self, request, *args, **kwargs):
