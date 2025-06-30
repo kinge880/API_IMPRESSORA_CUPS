@@ -74,7 +74,7 @@ class FileUploadView(APIView):
 class PrinterListView(APIView):
     def get(self, request, *args, **kwargs):
         try:
-            response = requests.get('http://192.168.0.10:631/printers/')
+            response = requests.get('http://172.16.23.19:631/printers/')
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'lxml')
             printers = []
@@ -134,7 +134,7 @@ class DeletedTempFilesView(APIView):
 class PrintersStatusViews(APIView):
     def get(self, request, printer_name, *args, **kwargs):
         try:
-            response = requests.get(f'http://192.168.0.10:631/printers/{printer_name}')
+            response = requests.get(f'http://172.16.23.19:631/printers/{printer_name}')
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'lxml')
             printer_status = self.parse_printer_status(soup)
