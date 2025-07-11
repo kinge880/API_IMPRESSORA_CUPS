@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:3.12.1-slim
+FROM python:3.12.1-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender1 \
     unzip \
     wget \
+    cups \
+    cups-client \
+    cups-daemon \
 && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -23,6 +26,10 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Tornar o script de entrada executável
+RUN chmod +x /app/docker-entrypoint.sh
+
 EXPOSE 8000
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"] 
