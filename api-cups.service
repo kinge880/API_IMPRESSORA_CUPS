@@ -1,0 +1,17 @@
+[Unit]
+Description=API CUPS Django Application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/home/gothor/API_IMPRESSORA_CUPS
+Environment=PATH=/home/gothor/API_IMPRESSORA_CUPS/impressao/bin
+Environment=DJANGO_SETTINGS_MODULE=APIimpressora.settings
+ExecStart=/home/gothor/API_IMPRESSORA_CUPS/impressao/bin/python manage.py runserver 0.0.0.0:8000
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target 
