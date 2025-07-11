@@ -1,0 +1,19 @@
+services:
+  web:
+    platform: linux/amd64
+    build: .
+    container_name: api_cups_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - ./static:/app/static
+      - ./temp_uploads:/app/temp_uploads
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - DJANGO_SETTINGS_MODULE=APIimpressora.settings
+      - PYTHONPATH=/app
+
+volumes:
+  static_data: 
